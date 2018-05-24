@@ -1,0 +1,89 @@
+############ README #############
+
+Following steps shows how to run:
+1. SimpleThreadFirewall.py
+2. SimpleRestFirewall.py
+
+RYU SDN controller applications.
+
+Initial setup:
+1. Install RYU SDN controller on Ubuntu Linux (https://osrg.github.io/ryu/)
+2. Install mininet (http://mininet.org/download/)
+3. Save SimpleThreadFirewall.py and SimpleRestFirewall.py in ~/ryu/ryu/app
+4. Save blacklist.txt file in ~/ryu/ryu/app
+
+#############################
+RUNNING SimpleThreadFirewall
+#############################
+
+1. Start a terminal and run SimpleThreadFirewall application 
+> ryu-manager SimpleThreadFirewall.py
+
+2. Start a terminal and create a virtual network topology with one switch, 
+   three hosts connected to the switch.
+> sudo mn --topo single,3 --mac --controller remote --switch ovsk,protocols=OpenFlow13
+
+3. Your switch is active with initial firewall rules configured from
+   blacklist.txt file. Now edit blacklist.txt file to change the access
+   configuration and save the changes. Now observe RYU controller logs
+   for your changed configuration to become effective on the switch.
+   ex: Initial configuration from blacklist.txt is blocking ICMP packets
+   between Host1 and Host2. 
+
+   [10.0.0.1, 10.0.0.2, icmp, DENY]
+
+   Test and verify ping command fails initially between Host1 and Host2.
+   Change blacklist.txt configuration to allow ICMP packets between Host1 and
+   Host2.
+
+   [10.0.0.1, 10.0.0.2, icmp, ALLOW]
+
+   save this change. Now after few seconds verify you can ping from Host1 to
+   Host2 and vice versa.
+
+
+#############################
+RUNNING SimpleRestFirewall
+#############################
+1. Start a terminal and run SimpleThreadFirewall application
+> ryu-manager SimpleThreadFirewall.py
+
+2. Start a terminal and create a virtual network topology with one switch,
+   three hosts connected to the switch.
+> sudo mn --topo single,3 --mac --controller remote --switch ovsk,protocols=OpenFlow13
+
+3. Your switch is active with initial firewall rules configured from
+   blacklist.txt file. Now edit blacklist.txt file to change the access
+   configuration and save the changes. Now observe RYU controller logs
+   for your changed configuration to become effective on the switch.
+   ex: Initial configuration from blacklist.txt is blocking ICMP packets
+   between Host1 and Host2.
+
+   [10.0.0.1, 10.0.0.2, icmp, DENY]
+
+   Test and verify ping command fails initially between Host1 and Host2.
+
+4. Start a terminal and issue following "CURL" command to list current
+   access rules/ flow rules on the switch.
+
+> curl  http://localhost:8080/simpleswitch/flowrules/0000000000000001
+
+   Observe controller logs for response status (200-OK, 404-error, 500-error)
+  
+5. Issue following curl command to add a single flow rule to the specified
+   switch.
+
+> curl http://localhost:8080/simpleswitch/flowrules/0000000000000001 -X PUT -d ' {"src_ip":"10.0.0.1","dst_ip":"10.0.0.2","action":"DENY","protocol":"icmp"}'
+
+   Observe controller logs for response status of 200 for this request execution
+   You can confirm that the flow rule is added on the switch by issueing 
+   following command on the mininet cosole.
+
+> sh sudo ovs-ofctl dump-flows s1 -O OpenFlow13
+
+6. Issue following curl command to delete entire flow rules from the table
+   for a specified switch.
+
+> curl http://localhost:8080/simpleswitch/flowrules/0000000000000001 -X DELETE
+
+   Confirm the same from controller logs and mininet console.
